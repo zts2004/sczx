@@ -1,0 +1,151 @@
+// Prisma数据库模型定义
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  studentId String?  @unique @map("student_id") @db.VarChar(50)
+  email     String   @unique @db.VarChar(100)
+  password  String   @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  realName  String?  @db.VarChar(50)
+  avatar    String?  @db.VarChar(255)
+  role      String   @default("user") @db.VarChar(20) // user, admin, super_admin
+  status    String   @default("active") @db.VarChar(20) // active, inactive
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  competitionsCreated Competition[] @relation("CompetitionCreator")
+  registrations       Registration[]
+  awards              Award[]
+  notifications       Notification[]
+  logs                Log[]
+  reviews             Registration[] @relation("RegistrationReviewer")
+  awardReviews        Award[]        @relation("AwardReviewer")
+  certificatesIssued  Award[]        @relation("CertificateIssuer")
+
+  @@map("users")
+}
+
+// 竞赛表
+model Competition {
+  id                Int       @id @default(autoincrement())
+  title             String    @db.VarChar(200)
+  description       String?   @db.Text
+  type              String    @db.VarChar(50)
+  coverImage        String?   @db.VarChar(255) @map("cover_image")
+  startTime         DateTime  @map("start_time")
+  endTime           DateTime  @map("end_time")
+  registrationStart DateTime  @map("registration_start")
+  registrationEnd   DateTime  @map("registration_end")
+  maxParticipants   Int       @default(0) @map("max_participants")
+  currentParticipants Int     @default(0) @map("current_participants")
+  requirements      Json?     // 报名要求
+  rules             String?   @db.Text
+  awards            Json?     // 奖项设置
+  status            String    @default("draft") @db.VarChar(20) // draft, not_started, registration_open, registration_closed, in_progress, ended, cancelled
+  createdBy         Int       @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  creator      User          @relation("CompetitionCreator", fields: [createdBy], references: [id])
+  registrations Registration[]
+  awardRecords Award[]
+
+  @@map("competitions")
+}
+
+// 报名表
+model Registration {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  competitionId   Int       @map("competition_id")
+  registrationData Json?    @map("registration_data")
+  attachments     Json?
+  status          String    @default("pending") @db.VarChar(20) // pending, approved, rejected, cancelled
+  reviewedBy      Int?     @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewNotes     String?   @db.Text @map("review_notes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // 关联关系
+  user      User         @relation(fields: [userId], references: [id])
+  competition Competition @relation(fields: [competitionId], references: [id])
+  reviewer  User?        @relation("RegistrationReviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([userId, competitionId])
+  @@map("registrations")
+}
+
+// 获奖记录表
+model Award {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  competitionId   Int?      @map("competition_id")
+  awardLevel      String    @map("award_level") @db.VarChar(20) // school, provincial, national, college
+  awardName       String    @map("award_name") @db.VarChar(200)
+  awardRank       String?   @map("award_rank") @db.VarChar(50)
+  awardTime       DateTime  @map("award_time")
+  certificateImage String?  @map("certificate_image") @db.VarChar(255)
+  certificateNumber String? @map("certificate_number") @db.VarChar(100)
+  description     String?   @db.Text
+  status          String    @default("pending") @db.VarChar(20) // pending, approved, rejected (仅校级/省级/国家级需要审核)
+  reviewedBy      Int?      @map("reviewed_by")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewNotes     String?   @db.Text @map("review_notes")
+  issuedBy        Int?      @map("issued_by") // 院级证书发放人
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // 关联关系
+  user      User  @relation(fields: [userId], references: [id])
+  competition Competition? @relation(fields: [competitionId], references: [id])
+  reviewer  User? @relation("AwardReviewer", fields: [reviewedBy], references: [id])
+  issuer    User? @relation("CertificateIssuer", fields: [issuedBy], references: [id])
+
+  @@map("awards")
+}
+
+// 通知表
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String   @db.VarChar(50)
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// 系统日志表
+model Log {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  action     String   @db.VarChar(50)
+  resource   String   @db.VarChar(50)
+  resourceId Int?     @map("resource_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address") @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // 关联关系
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("logs")
+}

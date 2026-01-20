@@ -1,0 +1,49 @@
+==========================================
+数据库配置说明
+==========================================
+
+根据你的阿里云 RDS 信息，我已经创建了 backend/.env 文件。
+
+请按以下步骤完成配置：
+
+1. 编辑 backend/.env 文件
+   - 找到 DATABASE_URL 这一行
+   - 替换以下信息：
+     * "root" → 你的数据库账号（如果不是root，请修改）
+     * "你的密码" → 你的数据库密码
+     * "competition_db" → 你的数据库名（如果还没创建，请先在RDS中创建）
+
+2. 最终格式应该是：
+   DATABASE_URL="mysql://账号:密码@rm-cn-ow74mc5ju0001r10.rwlb.rds.aliyuncs.com:5432/数据库名"
+
+3. 重要：配置白名单
+   - 登录阿里云控制台
+   - 进入 RDS 实例 -> 数据安全性 -> 白名单设置
+   - 添加你的公网IP（或临时使用 0.0.0.0/0 允许所有IP，仅开发用）
+
+4. 创建数据库（如果还没创建）
+   - 使用数据库管理工具（如 Navicat、DBeaver）连接
+   - 或使用阿里云的 DMS 数据管理
+   - 创建数据库：competition_db
+   - 字符集：utf8mb4
+   - 排序规则：utf8mb4_unicode_ci
+
+5. 初始化数据库表结构
+   在终端执行：
+   cd backend
+   npm run prisma:generate
+   npm run prisma:migrate
+
+6. 启动项目
+   后端：cd backend && npm run dev
+   前端：cd frontend && npm run dev
+
+==========================================
+你的数据库信息：
+==========================================
+外网地址：rm-cn-ow74mc5ju0001r10.rwlb.rds.aliyuncs.com
+外网端口：5432
+内网地址：rm-cn-ow74mc5ju0001r.rwlb.rds.aliyuncs.com
+内网端口：5432
+
+请将上述信息填入 .env 文件的 DATABASE_URL 中。
