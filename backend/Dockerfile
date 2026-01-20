@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# 安装依赖
-RUN npm install
+# 安装依赖（包含 devDependencies，保证 TypeScript 等构建工具可用）
+RUN npm install --include=dev
 
 # 生成 Prisma 客户端
 RUN npx prisma generate
