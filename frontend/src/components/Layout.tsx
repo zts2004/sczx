@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User, Trophy, FileText, Home } from 'lucide-react';
+import { LogOut, User, Trophy, FileText } from 'lucide-react';
 import ToastHost from './ToastHost';
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications';
 

@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 export type Toast = {
   id: string;
   title: string;
